@@ -58,8 +58,8 @@
 
 #ifdef HAVE_SPHINCS
     #define SPX_TYPE SHA256_128F_SIMPLE
-    //#define SPX_TYPE SHA256_128S_SIMPLE    
-    //#define SPX_TYPE SHA256_192F_SIMPLE
+    #define SPX_TYPE SHA256_128S_SIMPLE    
+   // #define SPX_TYPE SHA256_192F_SIMPLE
     /* available types  SHA256_128S_SIMPLE, SHA256_192S_SIMPLE */
     #define SPX_MODE           1  /* available modes 1, 3 */
 #endif
