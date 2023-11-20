@@ -1,0 +1,166 @@
+SECTION-1
+
+----------------------------------
+||for setting up pq-wolfSSL-light||
+----------------------------------
+in pq-wolSSL-light directory run these commands,
+
+chmod +x autogen.sh
+
+./autogen.sh
+
+./configure --with-liboqs CFLAGS="-O2 -DWOLFSSL_HAVE_SP_ECC -DWOLFSSL_HAVE_SP_DH -DWC_NO_HARDEN" --enable-tls13 --disable-tlsv12 --disable-oldtls --enable-falcon --enable-dilithium --enable-xmss --enable-sphincs --enable-kyber --enable-keygen --enable-crypttests --disable-rsa --enable-dh --disable-aescbc --disable-poly1305 --disable-chacha --disable-des3 --disable-md5 --disable-sha --disable-sha224 --enable-sha384 --enable-sha512 --enable-sha3 --disable-eccshamir --enable-certreq --enable-certgen --enable-keygen --disable-fastmath --enable-sp-math-all --disable-asm --disable-errorstrings --enable-opensslextra
+
+make ---->(if it doesnt work run 'sudo make') 
+1.if you get error while running 'make' remove '-Werror'  from make file
+**you will get if you are building from scratch, but if you downloaded the folder from teams these changes are already done**
+2.add 'extern' infront of uint8_t state_seeded[40]; in line 47 in wolfssl/wolfcrypt/sphincs_sha256.h file
+3.declare 'uint8_t state_seeded[40]={0};' in line 22 in wolfcrypt/src/sphincs_thash_sha256.c file
+
+sudo make install
+
+=============================================================================================
+SECTION-2
+
+--------------------------------------------
+||for generating certs from certgen folder||
+--------------------------------------------
+
+in certgen directory run these commands 
+
+make
+
+--> to generate ECDSA certs
+./certgen out=ECDSA-1_ECDSA-1_ECDSA-1 root=ECDSA 1 ica=ECDSA 1 leaf=ECDSA 1
+
+-->to generate dilithium level-2 certs
+./certgen out=DIL-2 root=DILITHIUM 2 ica=DILITHIUM 2 leaf=DILITHIUM 2
+(you can give out=**ANY OUTPUT FOLDER NAME YOU WANT**)
+
+-->to generate xmss certs
+./certgen out=XMSS-1 root=XMSS 1 ica=XMSS 1 leaf=XMSS 1
+
+-->to generate falcon certs 
+./certgen out=FAL-1 root=FALCON 1 ica=FALCON 1 leaf=FALCON 1 
+
+-->to generate sphincs+ certs
+1. Open settings.h file in pq-wolfSSL/wolfssl/wolfcrypt directory and enable SPX TYPE SHA256 128S SIMPLE for security
+level 1.
+2. Uncomment the line 61 and comment line 60 in settings.h file for sphincs-s.
+3. Run all the commands from above "setting up pq-wolfSSL" section.
+4. Run --> sudo ldconfig
+5. Go to certgen directory.
+6. Run make. It is advised to run make clean command before executing make command.
+7. Run 
+./certgen out=SP-1 root=SPHINCS 1 ica=SPHINCS 1 leaf=SPHINCS 1 
+command to generate a sphincs+ certificate chain.
+
+------------------
+||for MIXED-CERTS||  ---> keeping xmss at root level, other schemes at ica,leaf level
+------------------
+
+-->to generate xmss+dil certs
+./certgen out=xmss-dil root=XMSS 1 ica=DILITHIUM 2 leaf=DILITHIUM 2
+
+-->to generate xmss+fal certs
+./certgen out=xmss-dil root=XMSS 1 ica=FALCON 1 leaf=FALCON 1
+
+-->to generate xmss+sp certs
+./certgen out=xmss-dil root=XMSS 1 ica=SPHINCS 1 leaf=SPHINCS 1
+
+
+========================================================================================
+SECTION-3
+
+--------------------------------
+||for client -server connection||
+--------------------------------
+in client-server directory run these commands 
+
+remove !defined(XMSS_FUNC) from line 381 in client.c and line 402 in server.c for getting XMSS certs
+
+make
+
+ create a folder certs in certgen directory and dump the certs developed for algorithm in that created folder
+ ex: certgen/dilithium/certs --> certgen/certs
+
+-->for dilithium connection
+./server out=DIL-2 root=DILITHIUM 2 ica=DILITHIUM 2 leaf=DILITHIUM 2 kem=KYBER 1
+./client ip=127.0.0.1 out=DIL-2 root=DILITHIUM 2 ica=DILITHIUM 2 leaf=DILITHIUM 2 kem=KYBER 1 iter=100
+
+-->for xmss connection
+./server out=XMSS-1 root=XMSS 1 ica=XMSS 1 leaf=XMSS 1 kem=KYBER 1
+./client ip=127.0.0.1 out=XMSS-1 root=XMSS 1 ica=XMSS 1 leaf=XMSS 1 kem=KYBER 1 iter=100
+
+-->for falcon connection
+./server out=fal-1 root=FALCON 1 ica=FALCON 1 leaf=FALCON 1 kem=KYBER 1
+./client ip=127.0.0.1 out=fal-1 root=FALCON 1 ica=FALCON 1 leaf=FALCON 1 kem=KYBER 1 iter=100
+
+-->for sphincs connection
+./server out=SP-1 root=SPHINCS 1 ica=SPHINCS 1 leaf=SPHINCS 1 kem=KYBER 1
+./client ip=127.0.0.1 out=SP-1 root=SPHINCS 1 ica=SPHINCS 1 leaf=SPHINCS 1 kem=KYBER 1 iter=100
+
+-->for xmss+dil connection
+./server out=xmss-dil root=XMSS 1 ica=DILITHIUM 2 leaf=DILITHIUM 2 kem=KYBER 1
+./client ip=127.0.0.1 out=xmss-dil root=XMSS 1 ica=DILITHIUM 2 leaf=DILITHIUM 2 kem=KYBER 1 iter=100
+
+-->for xmss+fal connection
+./server out=xmss-fal root=XMSS 1 ica=FALCON 1 leaf=FALCON 1 kem=KYBER 1
+./client ip=127.0.0.1 out=xmss-fal root=XMSS 1 ica=FALCON 1 leaf=FALCON 1 kem=KYBER 1 iter=100
+
+-->for xmss+sp connection
+./server out=xmss-sp root=XMSS 1 ica=SPHINCS 1 leaf=SPHINCS 1 kem=KYBER 1
+./client ip=127.0.0.1 out=xmss-sp root=XMSS 1 ica=SPHINCS 1 leaf=SPHINCS 1 kem=KYBER 1 iter=100
+
+========================================================================================
+
+SECTION-4
+
+1.To use the serverkey.pem file generated at each level in certgen folder when we generated certificates as secretkey and sign any msg/msgfile (secureboot files) and generate a signature
+
+2.extract the public key present in that level certificate(servercert.pem) 
+
+3.use this public key to verify the signature generated. if verified result is 0, if not result is -1.
+
+go to pq-wolfSSL-light/test folder
+
+run make
+
+
+-------------
+||STANDALONE||
+-------------
+
+
+1.1 /test/dilithium/ --> run ./dil-combinedsign (for generating signatures)
+                             ./dil-combinedverify (for certificate chain verification and signatures verification)
+                             
+-->signatures are stored as signature1.txt(for f0.zip), signature2.txt(f1.img.xz) and signature3.txt(f2.zip)
+-->for certificate chain verification in "/test/dilithium/DIL-2/certs " we can see 'root.pem' which is nothing but the concatination of rootcert.pem and icacert.pem
+
+
+1.2 /test/falcon/ --> run ./fal-combinedsign (for generating signatures)
+                             ./fal-combinedverify (for certificate chain verification and signatures verification)
+                           
+1.3 /test/sphincs/ --> run ./sp-combinedsign (for generating signatures)
+                             ./sp-combinedverify (for certificate chain verification and signatures verification)
+
+1.4 /test/xmss/ --> run ./xmss-combinedsign (for generating signatures)
+                             ./xmss-combinedverify (for certificate chain verification and signatures verification)
+
+
+--------
+||MIXED||
+--------
+
+1.5 /test/xmss-dil/ --> run ./xmss-dil-combinedsign (for generating signatures)
+                             ./xmss-dil-combinedverify (for certificate chain verification and signatures verification)
+                             
+1.6 /test/xmss-fal/ --> run ./xmss-fal-combinedsign (for generating signatures)
+                             ./xmss-fal-combinedverify (for certificate chain verification and signatures verification)
+
+1.7 /test/xmss-sp/ --> run ./xmss-sp-combinedsign (for generating signatures)
+                             ./xmss-sp-combinedverify (for certificate chain verification and signatures verification)
+================================================
+
+
